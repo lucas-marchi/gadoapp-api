@@ -1,8 +1,8 @@
-package br.com.iotasoftware.gadoapp.gadoappapiv2.service;
+package br.com.iotasoftware.gadoapp.gadoappapi.service;
 
-import br.com.iotasoftware.gadoapp.gadoappapiv2.dto.HerdDTO;
-import br.com.iotasoftware.gadoapp.gadoappapiv2.model.Herd;
-import br.com.iotasoftware.gadoapp.gadoappapiv2.repository.HerdRepository;
+import br.com.iotasoftware.gadoapp.gadoappapi.dto.HerdDTO;
+import br.com.iotasoftware.gadoapp.gadoappapi.model.Herd;
+import br.com.iotasoftware.gadoapp.gadoappapi.repository.HerdRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;

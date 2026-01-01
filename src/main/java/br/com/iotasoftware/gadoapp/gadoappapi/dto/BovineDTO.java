@@ -1,8 +1,6 @@
-package br.com.iotasoftware.gadoapp.gadoappapiv2.dto;
+package br.com.iotasoftware.gadoapp.gadoappapi.dto;
 
-import br.com.iotasoftware.gadoapp.gadoappapiv2.model.Bovine;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
+import br.com.iotasoftware.gadoapp.gadoappapi.model.Bovine;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -33,7 +31,9 @@ public class BovineDTO {
         this.weight = bovine.getWeight();
         this.birth = bovine.getBirth();
         this.description = bovine.getDescription();
-        this.herdId = bovine.getHerdId();
+        if (bovine.getHerd() != null) {
+            this.herdId = bovine.getHerd().getId();
+        }
         this.momId = bovine.getMomId();
         this.dadId = bovine.getDadId();
     }

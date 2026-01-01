@@ -1,4 +1,4 @@
-package br.com.iotasoftware.gadoapp.gadoappapiv2.dto;
+package br.com.iotasoftware.gadoapp.gadoappapi.dto;
 
 import lombok.Builder;
 import lombok.Data;

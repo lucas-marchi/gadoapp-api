@@ -1,10 +1,10 @@
-package br.com.iotasoftware.gadoapp.gadoappapiv2.controller;
+package br.com.iotasoftware.gadoapp.gadoappapi.controller;
 
-import br.com.iotasoftware.gadoapp.gadoappapiv2.dto.BovineDTO;
-import br.com.iotasoftware.gadoapp.gadoappapiv2.dto.HerdDTO;
-import br.com.iotasoftware.gadoapp.gadoappapiv2.dto.SyncRequest;
-import br.com.iotasoftware.gadoapp.gadoappapiv2.service.BovineService;
-import br.com.iotasoftware.gadoapp.gadoappapiv2.service.HerdService;
+import br.com.iotasoftware.gadoapp.gadoappapi.dto.BovineDTO;
+import br.com.iotasoftware.gadoapp.gadoappapi.dto.HerdDTO;
+import br.com.iotasoftware.gadoapp.gadoappapi.dto.SyncRequest;
+import br.com.iotasoftware.gadoapp.gadoappapi.service.BovineService;
+import br.com.iotasoftware.gadoapp.gadoappapi.service.HerdService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

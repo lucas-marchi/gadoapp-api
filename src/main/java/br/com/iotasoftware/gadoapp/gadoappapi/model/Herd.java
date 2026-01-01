@@ -1,6 +1,5 @@
-package br.com.iotasoftware.gadoapp.gadoappapiv2.model;
+package br.com.iotasoftware.gadoapp.gadoappapi.model;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -21,7 +20,8 @@ public class Herd {
     @Column(nullable = false)
     private String name;
 
-    @OneToMany(mappedBy = "herdId", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "herd", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<Bovine> bovines = new ArrayList<>();
 
     public Herd() {

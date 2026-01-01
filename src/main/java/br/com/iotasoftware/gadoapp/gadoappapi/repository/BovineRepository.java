@@ -1,6 +1,6 @@
-package br.com.iotasoftware.gadoapp.gadoappapiv2.repository;
+package br.com.iotasoftware.gadoapp.gadoappapi.repository;
 
-import br.com.iotasoftware.gadoapp.gadoappapiv2.model.Bovine;
+import br.com.iotasoftware.gadoapp.gadoappapi.model.Bovine;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

@@ -1,4 +1,4 @@
-package br.com.iotasoftware.gadoapp.gadoappapiv2.model;
+package br.com.iotasoftware.gadoapp.gadoappapi.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
@@ -34,14 +34,15 @@ public class Bovine {
 
     private String description;
 
+    @ManyToOne
     @JoinColumn(name = "herd_id")
     @JsonBackReference
-    private Integer herdId;
+    private Herd herd;
 
-    @JoinColumn(name = "mom_id")
+    @Column(name = "mom_id")
     private Integer momId;
 
-    @JoinColumn(name = "dad_id")
+    @Column(name = "dad_id")
     private Integer dadId;
 
     public Bovine() {

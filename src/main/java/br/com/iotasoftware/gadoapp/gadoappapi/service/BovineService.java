@@ -1,8 +1,10 @@
-package br.com.iotasoftware.gadoapp.gadoappapiv2.service;
+package br.com.iotasoftware.gadoapp.gadoappapi.service;
 
-import br.com.iotasoftware.gadoapp.gadoappapiv2.dto.BovineDTO;
-import br.com.iotasoftware.gadoapp.gadoappapiv2.model.Bovine;
-import br.com.iotasoftware.gadoapp.gadoappapiv2.repository.BovineRepository;
+import br.com.iotasoftware.gadoapp.gadoappapi.dto.BovineDTO;
+import br.com.iotasoftware.gadoapp.gadoappapi.model.Bovine;
+import br.com.iotasoftware.gadoapp.gadoappapi.model.Herd;
+import br.com.iotasoftware.gadoapp.gadoappapi.repository.BovineRepository;
+import br.com.iotasoftware.gadoapp.gadoappapi.repository.HerdRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
@@ -14,9 +16,11 @@ import java.util.List;
 public class BovineService {
 
     private final BovineRepository bovineRepository;
+    private final HerdRepository herdRepository;
 
-    public BovineService(BovineRepository bovineRepository) {
+    public BovineService(BovineRepository bovineRepository, HerdRepository herdRepository) {
         this.bovineRepository = bovineRepository;
+        this.herdRepository = herdRepository;
     }
 
     @PersistenceContext
@@ -29,6 +33,11 @@ public class BovineService {
         entityManager.clear();
 
         for (BovineDTO dto : dtos) {
+            Herd herd = null;
+            if (dto.getHerdId() != null) {
+                herd = herdRepository.findById(dto.getHerdId()).orElse(null);
+            }
+
             Bovine newBovine = Bovine.builder()
                     .id(dto.getId())
                     .name(dto.getName())
@@ -38,7 +47,7 @@ public class BovineService {
                     .weight(dto.getWeight())
                     .birth(dto.getBirth())
                     .description(dto.getDescription())
-                    .herdId(dto.getHerdId())
+                    .herd(herd)
                     .momId(dto.getMomId())
                     .dadId(dto.getDadId())
                     .build();

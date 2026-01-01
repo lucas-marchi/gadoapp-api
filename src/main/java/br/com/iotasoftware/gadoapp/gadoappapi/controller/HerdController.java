@@ -1,8 +1,8 @@
-package br.com.iotasoftware.gadoapp.gadoappapiv2.controller;
+package br.com.iotasoftware.gadoapp.gadoappapi.controller;
 
-import br.com.iotasoftware.gadoapp.gadoappapiv2.dto.HerdDTO;
-import br.com.iotasoftware.gadoapp.gadoappapiv2.model.Herd;
-import br.com.iotasoftware.gadoapp.gadoappapiv2.repository.HerdRepository;
+import br.com.iotasoftware.gadoapp.gadoappapi.dto.HerdDTO;
+import br.com.iotasoftware.gadoapp.gadoappapi.model.Herd;
+import br.com.iotasoftware.gadoapp.gadoappapi.repository.HerdRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

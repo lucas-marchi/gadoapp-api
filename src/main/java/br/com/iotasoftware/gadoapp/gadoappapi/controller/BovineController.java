@@ -1,33 +1,51 @@
 package br.com.iotasoftware.gadoapp.gadoappapi.controller;
 
 import br.com.iotasoftware.gadoapp.gadoappapi.dto.BovineDTO;
-import br.com.iotasoftware.gadoapp.gadoappapi.model.Bovine;
-import br.com.iotasoftware.gadoapp.gadoappapi.repository.BovineRepository;
+import br.com.iotasoftware.gadoapp.gadoappapi.service.BovineService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/bovines")
 public class BovineController {
 
-    private final BovineRepository bovineRepository;
+    private final BovineService bovineService;
 
-    public BovineController(BovineRepository bovineRepository) {
-        this.bovineRepository = bovineRepository;
+    public BovineController(BovineService bovineService) {
+        this.bovineService = bovineService;
     }
 
-    @GetMapping("/bovines")
+    @GetMapping
     public ResponseEntity<List<BovineDTO>> getAllBovines() {
-        List<Bovine> bovines = bovineRepository.findAll();
-        return ResponseEntity.ok(
-                bovines.stream()
-                        .map(BovineDTO::new)
-                        .collect(Collectors.toList())
-        );
+        return ResponseEntity.ok(bovineService.getAllBovines());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<BovineDTO> getBovineById(@PathVariable Integer id) {
+        return bovineService.getBovineById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping
+    public ResponseEntity<BovineDTO> createBovine(@RequestBody BovineDTO dto) {
+        return ResponseEntity.ok(bovineService.createBovine(dto));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<BovineDTO> updateBovine(@PathVariable Integer id, @RequestBody BovineDTO dto) {
+        return bovineService.updateBovine(id, dto)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteBovine(@PathVariable Integer id) {
+        if (bovineService.deleteBovine(id)) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.notFound().build();
     }
 }

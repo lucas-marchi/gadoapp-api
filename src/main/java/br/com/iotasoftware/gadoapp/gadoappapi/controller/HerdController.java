@@ -1,38 +1,51 @@
 package br.com.iotasoftware.gadoapp.gadoappapi.controller;
 
 import br.com.iotasoftware.gadoapp.gadoappapi.dto.HerdDTO;
-import br.com.iotasoftware.gadoapp.gadoappapi.model.Herd;
-import br.com.iotasoftware.gadoapp.gadoappapi.repository.HerdRepository;
+import br.com.iotasoftware.gadoapp.gadoappapi.service.HerdService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/herds")
 public class HerdController {
 
-    private final HerdRepository herdRepository;
+    private final HerdService herdService;
 
-    public HerdController(HerdRepository herdRepository) {
-        this.herdRepository = herdRepository;
+    public HerdController(HerdService herdService) {
+        this.herdService = herdService;
     }
 
-    @GetMapping("/herds")
+    @GetMapping
     public ResponseEntity<List<HerdDTO>> getAllHerds() {
-        List<Herd> herds = herdRepository.findAll();
-        return ResponseEntity.ok(herds.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList()));
+        return ResponseEntity.ok(herdService.getAllHerds());
     }
 
-    private HerdDTO convertToDTO(Herd herd) {
-        return new HerdDTO(
-                herd.getId(),
-                herd.getName()
-        );
+    @GetMapping("/{id}")
+    public ResponseEntity<HerdDTO> getHerdById(@PathVariable Integer id) {
+        return herdService.getHerdById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping
+    public ResponseEntity<HerdDTO> createHerd(@RequestBody HerdDTO dto) {
+        return ResponseEntity.ok(herdService.createHerd(dto));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<HerdDTO> updateHerd(@PathVariable Integer id, @RequestBody HerdDTO dto) {
+        return herdService.updateHerd(id, dto)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteHerd(@PathVariable Integer id) {
+        if (herdService.deleteHerd(id)) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.notFound().build();
     }
 }

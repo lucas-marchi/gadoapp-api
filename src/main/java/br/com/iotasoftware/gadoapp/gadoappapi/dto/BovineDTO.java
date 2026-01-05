@@ -4,6 +4,7 @@ import br.com.iotasoftware.gadoapp.gadoappapi.model.Bovine;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Data
@@ -21,6 +22,8 @@ public class BovineDTO {
     private Integer herdId;
     private Integer momId;
     private Integer dadId;
+    private Boolean active;
+    private LocalDateTime updatedAt;
 
     public BovineDTO(Bovine bovine) {
         this.id = bovine.getId();
@@ -36,6 +39,8 @@ public class BovineDTO {
         }
         this.momId = bovine.getMomId();
         this.dadId = bovine.getDadId();
+        this.active = bovine.getActive();
+        this.updatedAt = bovine.getUpdatedAt();
     }
 
     public Integer getId() { return id; }
@@ -70,4 +75,10 @@ public class BovineDTO {
 
     public Integer getDadId() { return dadId; }
     public void setDadId(Integer dadId) { this.dadId = dadId; }
+
+    public Boolean getActive() { return active; }
+    public void setActive(Boolean active) { this.active = active; }
+
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 }

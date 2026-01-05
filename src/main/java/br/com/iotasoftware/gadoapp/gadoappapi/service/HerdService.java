@@ -8,6 +8,7 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -25,37 +26,58 @@ public class HerdService {
     private EntityManager entityManager;
 
     @Transactional
-    public void syncHerdsOverwriteSafely(List<HerdDTO> dtos) {
-        herdRepository.deleteAll();
-        entityManager.flush();
-        entityManager.clear();
-
+    public void syncHerds(List<HerdDTO> dtos) {
         for (HerdDTO dto : dtos) {
-            Herd newHerd = Herd.builder()
-                    .id(dto.getId())
-                    .name(dto.getName())
-                    .build();
-            herdRepository.save(newHerd);
+            if (dto.getId() != null) {
+                Optional<Herd> existingOpt = herdRepository.findById(dto.getId());
+                if (existingOpt.isPresent()) {
+                    Herd existing = existingOpt.get();
+                    // Lógica de conflito simples: última escrita vence (baseado no updatedAt do servidor vs cliente se necessário)
+                    // Aqui assumimos que o cliente manda a verdade
+                    existing.setName(dto.getName());
+                    if (dto.getActive() != null) existing.setActive(dto.getActive());
+                    herdRepository.save(existing);
+                } else {
+                    // ID existe no cliente mas não no servidor? Criar novo com esse ID
+                    createHerdFromSync(dto);
+                }
+            } else {
+                createHerdFromSync(dto);
+            }
         }
+    }
+    
+    private void createHerdFromSync(HerdDTO dto) {
+        Herd newHerd = Herd.builder()
+                .id(dto.getId())
+                .name(dto.getName())
+                .active(dto.getActive() != null ? dto.getActive() : true)
+                .build();
+        herdRepository.save(newHerd);
     }
 
     public List<HerdDTO> getAllHerds() {
-        return herdRepository.findAll().stream()
+        return herdRepository.findByActiveTrue().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+    
+    public List<HerdDTO> getHerdsChangedSince(LocalDateTime since) {
+        return herdRepository.findByUpdatedAtAfter(since).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
     public Optional<HerdDTO> getHerdById(Integer id) {
         return herdRepository.findById(id)
+                .filter(Herd::getActive)
                 .map(this::convertToDTO);
     }
 
     public HerdDTO createHerd(HerdDTO dto) {
-        // Se o ID for fornecido, ele será usado (útil para sincronização).
-        // Se for nulo, o banco de dados gerará um novo ID (útil para criação via API).
         Herd herd = Herd.builder()
-                .id(dto.getId())
                 .name(dto.getName())
+                .active(true)
                 .build();
         Herd savedHerd = herdRepository.save(herd);
         return convertToDTO(savedHerd);
@@ -63,6 +85,7 @@ public class HerdService {
 
     public Optional<HerdDTO> updateHerd(Integer id, HerdDTO dto) {
         return herdRepository.findById(id)
+                .filter(Herd::getActive)
                 .map(existingHerd -> {
                     existingHerd.setName(dto.getName());
                     return convertToDTO(herdRepository.save(existingHerd));
@@ -70,17 +93,20 @@ public class HerdService {
     }
 
     public boolean deleteHerd(Integer id) {
-        if (herdRepository.existsById(id)) {
-            herdRepository.deleteById(id);
-            return true;
-        }
-        return false;
+        return herdRepository.findById(id)
+                .map(herd -> {
+                    herd.setActive(false);
+                    herdRepository.save(herd);
+                    return true;
+                }).orElse(false);
     }
 
     private HerdDTO convertToDTO(Herd herd) {
         return new HerdDTO(
                 herd.getId(),
-                herd.getName()
+                herd.getName(),
+                herd.getActive(),
+                herd.getUpdatedAt()
         );
     }
 }

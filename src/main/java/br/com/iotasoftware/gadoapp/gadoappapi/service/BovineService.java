@@ -10,6 +10,7 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -29,34 +30,52 @@ public class BovineService {
     private EntityManager entityManager;
 
     @Transactional
-    public void syncBovinesOverwriteSafely(List<BovineDTO> dtos) {
-        bovineRepository.deleteAll();
-        entityManager.flush();
-        entityManager.clear();
-
+    public void syncBovines(List<BovineDTO> dtos) {
         for (BovineDTO dto : dtos) {
-            saveBovineFromDTO(dto);
+            if (dto.getId() != null) {
+                Optional<Bovine> existingOpt = bovineRepository.findById(dto.getId());
+                if (existingOpt.isPresent()) {
+                    Bovine existing = existingOpt.get();
+                    updateBovineFromDTO(existing, dto);
+                    if (dto.getActive() != null) existing.setActive(dto.getActive());
+                    bovineRepository.save(existing);
+                } else {
+                    saveBovineFromDTO(dto);
+                }
+            } else {
+                saveBovineFromDTO(dto);
+            }
         }
     }
 
     public List<BovineDTO> getAllBovines() {
-        return bovineRepository.findAll().stream()
+        return bovineRepository.findByActiveTrue().stream()
+                .map(BovineDTO::new)
+                .collect(Collectors.toList());
+    }
+    
+    public List<BovineDTO> getBovinesChangedSince(LocalDateTime since) {
+        return bovineRepository.findByUpdatedAtAfter(since).stream()
                 .map(BovineDTO::new)
                 .collect(Collectors.toList());
     }
 
     public Optional<BovineDTO> getBovineById(Integer id) {
         return bovineRepository.findById(id)
+                .filter(Bovine::getActive)
                 .map(BovineDTO::new);
     }
 
     public BovineDTO createBovine(BovineDTO dto) {
+        dto.setId(null); // Garante criação
+        dto.setActive(true);
         Bovine savedBovine = saveBovineFromDTO(dto);
         return new BovineDTO(savedBovine);
     }
 
     public Optional<BovineDTO> updateBovine(Integer id, BovineDTO dto) {
         return bovineRepository.findById(id)
+                .filter(Bovine::getActive)
                 .map(existingBovine -> {
                     updateBovineFromDTO(existingBovine, dto);
                     return new BovineDTO(bovineRepository.save(existingBovine));
@@ -64,11 +83,12 @@ public class BovineService {
     }
 
     public boolean deleteBovine(Integer id) {
-        if (bovineRepository.existsById(id)) {
-            bovineRepository.deleteById(id);
-            return true;
-        }
-        return false;
+        return bovineRepository.findById(id)
+                .map(bovine -> {
+                    bovine.setActive(false);
+                    bovineRepository.save(bovine);
+                    return true;
+                }).orElse(false);
     }
 
     private Bovine saveBovineFromDTO(BovineDTO dto) {
@@ -77,8 +97,6 @@ public class BovineService {
             herd = herdRepository.findById(dto.getHerdId()).orElse(null);
         }
 
-        // Se o ID for fornecido, ele será usado (útil para sincronização).
-        // Se for nulo, o banco de dados gerará um novo ID (útil para criação via API).
         Bovine newBovine = Bovine.builder()
                 .id(dto.getId())
                 .name(dto.getName())
@@ -91,6 +109,7 @@ public class BovineService {
                 .herd(herd)
                 .momId(dto.getMomId())
                 .dadId(dto.getDadId())
+                .active(dto.getActive() != null ? dto.getActive() : true)
                 .build();
         return bovineRepository.save(newBovine);
     }

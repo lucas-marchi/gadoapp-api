@@ -5,9 +5,11 @@ import br.com.iotasoftware.gadoapp.gadoappapi.dto.HerdDTO;
 import br.com.iotasoftware.gadoapp.gadoappapi.dto.SyncRequest;
 import br.com.iotasoftware.gadoapp.gadoappapi.service.BovineService;
 import br.com.iotasoftware.gadoapp.gadoappapi.service.HerdService;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -23,11 +25,13 @@ public class SyncController {
         this.bovineService = bovineService;
     }
 
-    @PostMapping("/herds")
-    public ResponseEntity<?> syncHerds(@RequestBody SyncRequest<HerdDTO> dto) {
+    // --- UPLOAD (Cliente envia mudanças para o Servidor) ---
+
+    @PostMapping("/herds/push")
+    public ResponseEntity<?> pushHerds(@RequestBody SyncRequest<HerdDTO> dto) {
         List<HerdDTO> herds = dto.getData();
         try {
-            herdService.syncHerdsOverwriteSafely(herds);
+            herdService.syncHerds(herds);
             return ResponseEntity.ok(Map.of("message", "Rebanhos sincronizados com sucesso"));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(
@@ -36,16 +40,42 @@ public class SyncController {
         }
     }
 
-    @PostMapping("/bovines")
-    public ResponseEntity<?> syncBovines(@RequestBody SyncRequest<BovineDTO> dto) {
+    @PostMapping("/bovines/push")
+    public ResponseEntity<?> pushBovines(@RequestBody SyncRequest<BovineDTO> dto) {
         List<BovineDTO> bovines = dto.getData();
         try {
-            bovineService.syncBovinesOverwriteSafely(bovines);
+            bovineService.syncBovines(bovines);
             return ResponseEntity.ok(Map.of("message", "Bovinos sincronizados com sucesso"));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(
                     Map.of("error", "Erro na sincronização: " + e.getMessage())
             );
         }
+    }
+    
+    // --- DOWNLOAD (Cliente pede o que mudou desde a última vez) ---
+    
+    @GetMapping("/herds/pull")
+    public ResponseEntity<List<HerdDTO>> pullHerds(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime since) {
+        if (since == null) {
+            // Se não passar data, retorna tudo (carga inicial)
+            // Nota: Aqui retornamos até os deletados (active=false) se quisermos sincronizar deleções antigas,
+            // mas para carga inicial geralmente queremos apenas os ativos.
+            // Para simplificar, vamos retornar tudo que mudou desde "sempre" (ou seja, tudo).
+            // Mas cuidado: getAllHerds() filtra active=true.
+            // Para sync completo inicial, talvez queiramos apenas ativos.
+            return ResponseEntity.ok(herdService.getAllHerds());
+        }
+        return ResponseEntity.ok(herdService.getHerdsChangedSince(since));
+    }
+
+    @GetMapping("/bovines/pull")
+    public ResponseEntity<List<BovineDTO>> pullBovines(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime since) {
+        if (since == null) {
+            return ResponseEntity.ok(bovineService.getAllBovines());
+        }
+        return ResponseEntity.ok(bovineService.getBovinesChangedSince(since));
     }
 }

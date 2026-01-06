@@ -3,9 +3,8 @@ package br.com.iotasoftware.gadoapp.gadoappapi.service;
 import br.com.iotasoftware.gadoapp.gadoappapi.dto.HerdDTO;
 import br.com.iotasoftware.gadoapp.gadoappapi.model.Herd;
 import br.com.iotasoftware.gadoapp.gadoappapi.repository.HerdRepository;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -14,16 +13,10 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class HerdService {
 
     private final HerdRepository herdRepository;
-
-    public HerdService(HerdRepository herdRepository) {
-        this.herdRepository = herdRepository;
-    }
-
-    @PersistenceContext
-    private EntityManager entityManager;
 
     @Transactional
     public void syncHerds(List<HerdDTO> dtos) {

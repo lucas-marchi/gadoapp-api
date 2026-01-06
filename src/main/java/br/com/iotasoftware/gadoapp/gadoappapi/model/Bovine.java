@@ -9,6 +9,7 @@ import java.util.Date;
 
 @Getter
 @Setter
+@NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @Entity
@@ -56,9 +57,6 @@ public class Bovine {
 
     @Column(name = "dad_id")
     private Integer dadId;
-
-    public Bovine() {
-    }
 
     @PrePersist
     protected void onCreate() {

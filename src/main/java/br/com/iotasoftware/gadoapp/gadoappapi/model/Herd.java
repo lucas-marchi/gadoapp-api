@@ -9,6 +9,7 @@ import java.util.List;
 
 @Getter
 @Setter
+@NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @Entity
@@ -35,9 +36,6 @@ public class Herd {
     @OneToMany(mappedBy = "herd", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Bovine> bovines = new ArrayList<>();
-
-    public Herd() {
-    }
 
     @PrePersist
     protected void onCreate() {

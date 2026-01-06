@@ -5,6 +5,9 @@ import br.com.iotasoftware.gadoapp.gadoappapi.dto.HerdDTO;
 import br.com.iotasoftware.gadoapp.gadoappapi.dto.SyncRequest;
 import br.com.iotasoftware.gadoapp.gadoappapi.service.BovineService;
 import br.com.iotasoftware.gadoapp.gadoappapi.service.HerdService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,8 +28,13 @@ public class SyncController {
         this.bovineService = bovineService;
     }
 
-    // --- UPLOAD (Cliente envia mudanças para o Servidor) ---
-
+    @Operation(description = "Sincroniza os rebanhos, cliente envia mudanças para o Servidor")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Rebanhos sincronizados com sucesso"),
+            @ApiResponse(responseCode = "500", description = "Erro na sincronização"),
+            @ApiResponse(responseCode = "400", description = "Erro de validação"),
+            @ApiResponse(responseCode = "404", description = "Nenhum rebanho encontrado")
+    })
     @PostMapping("/herds/push")
     public ResponseEntity<?> pushHerds(@RequestBody SyncRequest<HerdDTO> dto) {
         List<HerdDTO> herds = dto.getData();
@@ -40,6 +48,13 @@ public class SyncController {
         }
     }
 
+    @Operation(description = "Sincroniza os bovinos, cliente envia mudanças para o Servidor")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Bovinos sincronizados com sucesso"),
+            @ApiResponse(responseCode = "500", description = "Erro na sincronização"),
+            @ApiResponse(responseCode = "400", description = "Erro de validação"),
+            @ApiResponse(responseCode = "404", description = "Nenhum bovino encontrado")
+    })
     @PostMapping("/bovines/push")
     public ResponseEntity<?> pushBovines(@RequestBody SyncRequest<BovineDTO> dto) {
         List<BovineDTO> bovines = dto.getData();
@@ -52,9 +67,12 @@ public class SyncController {
             );
         }
     }
-    
-    // --- DOWNLOAD (Cliente pede o que mudou desde a última vez) ---
-    
+
+    @Operation(description = "Cliente pede o que mudou desde a última vez da lista de rebanhos")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Retorna a lista de rebanhos"),
+            @ApiResponse(responseCode = "404", description = "Nenhum rebanho encontrado")
+    })
     @GetMapping("/herds/pull")
     public ResponseEntity<List<HerdDTO>> pullHerds(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime since) {
@@ -70,6 +88,11 @@ public class SyncController {
         return ResponseEntity.ok(herdService.getHerdsChangedSince(since));
     }
 
+    @Operation(description = "Cliente pede o que mudou desde a última vez da lista de bovinos")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Retorna a lista de bovinos"),
+            @ApiResponse(responseCode = "404", description = "Nenhum bovino encontrado")
+    })
     @GetMapping("/bovines/pull")
     public ResponseEntity<List<BovineDTO>> pullBovines(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime since) {

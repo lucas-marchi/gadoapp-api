@@ -3,10 +3,12 @@ package br.com.iotasoftware.gadoapp.gadoappapi.service;
 import br.com.iotasoftware.gadoapp.gadoappapi.dto.BovineDTO;
 import br.com.iotasoftware.gadoapp.gadoappapi.model.Bovine;
 import br.com.iotasoftware.gadoapp.gadoappapi.model.Herd;
+import br.com.iotasoftware.gadoapp.gadoappapi.model.User;
 import br.com.iotasoftware.gadoapp.gadoappapi.repository.BovineRepository;
 import br.com.iotasoftware.gadoapp.gadoappapi.repository.HerdRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -21,39 +23,44 @@ public class BovineService {
     private final BovineRepository bovineRepository;
     private final HerdRepository herdRepository;
 
+    private User getAuthenticatedUser() {
+        return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    }
+
     @Transactional
     public void syncBovines(List<BovineDTO> dtos) {
+        User user = getAuthenticatedUser();
         for (BovineDTO dto : dtos) {
             if (dto.getId() != null) {
-                Optional<Bovine> existingOpt = bovineRepository.findById(dto.getId());
+                Optional<Bovine> existingOpt = bovineRepository.findByIdAndHerdUser(dto.getId(), user);
                 if (existingOpt.isPresent()) {
                     Bovine existing = existingOpt.get();
-                    updateBovineFromDTO(existing, dto);
+                    updateBovineFromDTO(existing, dto, user);
                     if (dto.getActive() != null) existing.setActive(dto.getActive());
                     bovineRepository.save(existing);
                 } else {
-                    saveBovineFromDTO(dto);
+                    saveBovineFromDTO(dto, user);
                 }
             } else {
-                saveBovineFromDTO(dto);
+                saveBovineFromDTO(dto, user);
             }
         }
     }
 
     public List<BovineDTO> getAllBovines() {
-        return bovineRepository.findByActiveTrue().stream()
+        return bovineRepository.findByHerdUserAndActiveTrue(getAuthenticatedUser()).stream()
                 .map(BovineDTO::new)
                 .collect(Collectors.toList());
     }
     
     public List<BovineDTO> getBovinesChangedSince(LocalDateTime since) {
-        return bovineRepository.findByUpdatedAtAfter(since).stream()
+        return bovineRepository.findByHerdUserAndUpdatedAtAfter(getAuthenticatedUser(), since).stream()
                 .map(BovineDTO::new)
                 .collect(Collectors.toList());
     }
 
     public Optional<BovineDTO> getBovineById(Integer id) {
-        return bovineRepository.findById(id)
+        return bovineRepository.findByIdAndHerdUser(id, getAuthenticatedUser())
                 .filter(Bovine::getActive)
                 .map(BovineDTO::new);
     }
@@ -61,21 +68,21 @@ public class BovineService {
     public BovineDTO createBovine(BovineDTO dto) {
         dto.setId(null); // Garante criação
         dto.setActive(true);
-        Bovine savedBovine = saveBovineFromDTO(dto);
+        Bovine savedBovine = saveBovineFromDTO(dto, getAuthenticatedUser());
         return new BovineDTO(savedBovine);
     }
 
     public Optional<BovineDTO> updateBovine(Integer id, BovineDTO dto) {
-        return bovineRepository.findById(id)
+        return bovineRepository.findByIdAndHerdUser(id, getAuthenticatedUser())
                 .filter(Bovine::getActive)
                 .map(existingBovine -> {
-                    updateBovineFromDTO(existingBovine, dto);
+                    updateBovineFromDTO(existingBovine, dto, getAuthenticatedUser());
                     return new BovineDTO(bovineRepository.save(existingBovine));
                 });
     }
 
     public boolean deleteBovine(Integer id) {
-        return bovineRepository.findById(id)
+        return bovineRepository.findByIdAndHerdUser(id, getAuthenticatedUser())
                 .map(bovine -> {
                     bovine.setActive(false);
                     bovineRepository.save(bovine);
@@ -83,10 +90,12 @@ public class BovineService {
                 }).orElse(false);
     }
 
-    private Bovine saveBovineFromDTO(BovineDTO dto) {
+    private Bovine saveBovineFromDTO(BovineDTO dto, User user) {
         Herd herd = null;
         if (dto.getHerdId() != null) {
-            herd = herdRepository.findById(dto.getHerdId()).orElse(null);
+            // Verifica se o rebanho pertence ao usuário logado!
+            herd = herdRepository.findByIdAndUser(dto.getHerdId(), user)
+                    .orElseThrow(() -> new RuntimeException("Rebanho não encontrado ou não pertence ao usuário"));
         }
 
         Bovine newBovine = Bovine.builder()
@@ -106,7 +115,7 @@ public class BovineService {
         return bovineRepository.save(newBovine);
     }
 
-    private void updateBovineFromDTO(Bovine bovine, BovineDTO dto) {
+    private void updateBovineFromDTO(Bovine bovine, BovineDTO dto, User user) {
         bovine.setName(dto.getName());
         bovine.setStatus(dto.getStatus());
         bovine.setGender(dto.getGender());
@@ -118,7 +127,9 @@ public class BovineService {
         bovine.setDadId(dto.getDadId());
 
         if (dto.getHerdId() != null) {
-            Herd herd = herdRepository.findById(dto.getHerdId()).orElse(null);
+            // Verifica se o novo rebanho pertence ao usuário logado
+            Herd herd = herdRepository.findByIdAndUser(dto.getHerdId(), user)
+                    .orElseThrow(() -> new RuntimeException("Rebanho não encontrado ou não pertence ao usuário"));
             bovine.setHerd(herd);
         } else {
             bovine.setHerd(null);

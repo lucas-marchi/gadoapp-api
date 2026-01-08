@@ -66,7 +66,7 @@ public class BovineService {
     }
 
     public BovineDTO createBovine(BovineDTO dto) {
-        dto.setId(null); // Garante criação
+        dto.setId(null);
         dto.setActive(true);
         Bovine savedBovine = saveBovineFromDTO(dto, getAuthenticatedUser());
         return new BovineDTO(savedBovine);
@@ -93,7 +93,7 @@ public class BovineService {
     private Bovine saveBovineFromDTO(BovineDTO dto, User user) {
         Herd herd = null;
         if (dto.getHerdId() != null) {
-            // Verifica se o rebanho pertence ao usuário logado!
+
             herd = herdRepository.findByIdAndUser(dto.getHerdId(), user)
                     .orElseThrow(() -> new RuntimeException("Rebanho não encontrado ou não pertence ao usuário"));
         }
@@ -127,7 +127,7 @@ public class BovineService {
         bovine.setDadId(dto.getDadId());
 
         if (dto.getHerdId() != null) {
-            // Verifica se o novo rebanho pertence ao usuário logado
+
             Herd herd = herdRepository.findByIdAndUser(dto.getHerdId(), user)
                     .orElseThrow(() -> new RuntimeException("Rebanho não encontrado ou não pertence ao usuário"));
             bovine.setHerd(herd);

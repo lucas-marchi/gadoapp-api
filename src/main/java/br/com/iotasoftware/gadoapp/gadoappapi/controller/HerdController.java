@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/herd")
+@RequestMapping("/api/herds")
 public class HerdController {
 
     private final HerdService herdService;

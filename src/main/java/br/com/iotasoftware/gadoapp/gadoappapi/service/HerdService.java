@@ -29,7 +29,7 @@ public class HerdService {
         User user = getAuthenticatedUser();
         for (HerdDTO dto : dtos) {
             if (dto.getId() != null) {
-                // Tenta buscar garantindo que pertence ao usuário
+
                 Optional<Herd> existingOpt = herdRepository.findByIdAndUser(dto.getId(), user);
                 if (existingOpt.isPresent()) {
                     Herd existing = existingOpt.get();
@@ -37,8 +37,6 @@ public class HerdService {
                     if (dto.getActive() != null) existing.setActive(dto.getActive());
                     herdRepository.save(existing);
                 } else {
-                    // Se não achou (ou não é dele), cria novo (ou ignora se for tentativa de hack)
-                    // Aqui assumimos criação de novo registro vindo do sync
                     createHerdFromSync(dto, user);
                 }
             } else {

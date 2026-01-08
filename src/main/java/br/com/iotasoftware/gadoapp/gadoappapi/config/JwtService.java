@@ -17,8 +17,8 @@ import java.util.function.Function;
 @Service
 public class JwtService {
 
-    // Em produção, isso deve vir de uma variável de ambiente!
-    // Chave de 256 bits (32 caracteres)
+    // Mudar para variável de ambiente quando for para produção
+    // Chave de 256 bits
     private static final String SECRET_KEY = "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970";
 
     public String extractUsername(String token) {

@@ -29,7 +29,6 @@ public class HerdService {
         User user = getAuthenticatedUser();
         for (HerdDTO dto : dtos) {
             if (dto.getId() != null) {
-
                 Optional<Herd> existingOpt = herdRepository.findByIdAndUser(dto.getId(), user);
                 if (existingOpt.isPresent()) {
                     Herd existing = existingOpt.get();
@@ -37,22 +36,31 @@ public class HerdService {
                     if (dto.getActive() != null) existing.setActive(dto.getActive());
                     herdRepository.save(existing);
                 } else {
-                    createHerdFromSync(dto, user);
+                    createOrUpdateByName(dto, user);
                 }
             } else {
-                createHerdFromSync(dto, user);
+                createOrUpdateByName(dto, user);
             }
         }
     }
     
-    private void createHerdFromSync(HerdDTO dto, User user) {
-        Herd newHerd = Herd.builder()
-                .id(dto.getId())
-                .name(dto.getName())
-                .active(dto.getActive() != null ? dto.getActive() : true)
-                .user(user)
-                .build();
-        herdRepository.save(newHerd);
+    private void createOrUpdateByName(HerdDTO dto, User user) {
+
+        List<Herd> duplicates = herdRepository.findByUserAndNameAndActiveTrue(user, dto.getName());
+        
+        if (!duplicates.isEmpty()) {
+            Herd existing = duplicates.get(0);
+            
+            if (dto.getActive() != null) existing.setActive(dto.getActive());
+            herdRepository.save(existing);
+        } else {
+            Herd newHerd = Herd.builder()
+                    .name(dto.getName())
+                    .active(dto.getActive() != null ? dto.getActive() : true)
+                    .user(user)
+                    .build();
+            herdRepository.save(newHerd);
+        }
     }
 
     public List<HerdDTO> getAllHerds() {

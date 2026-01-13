@@ -12,4 +12,6 @@ public interface HerdRepository extends JpaRepository<Herd, Integer> {
     List<Herd> findByUserAndActiveTrue(User user);
     List<Herd> findByUserAndUpdatedAtAfter(User user, LocalDateTime date);
     Optional<Herd> findByIdAndUser(Integer id, User user);
+
+    List<Herd> findByUserAndNameAndActiveTrue(User user, String name);
 }

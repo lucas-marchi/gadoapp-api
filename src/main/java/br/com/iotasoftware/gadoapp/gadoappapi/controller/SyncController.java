@@ -42,6 +42,7 @@ public class SyncController {
             herdService.syncHerds(herds);
             return ResponseEntity.ok(Map.of("message", "Rebanhos sincronizados com sucesso"));
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.internalServerError().body(
                     Map.of("error", "Erro na sincronização: " + e.getMessage())
             );
@@ -62,6 +63,7 @@ public class SyncController {
             bovineService.syncBovines(bovines);
             return ResponseEntity.ok(Map.of("message", "Bovinos sincronizados com sucesso"));
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.internalServerError().body(
                     Map.of("error", "Erro na sincronização: " + e.getMessage())
             );
@@ -77,12 +79,6 @@ public class SyncController {
     public ResponseEntity<List<HerdDTO>> pullHerds(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime since) {
         if (since == null) {
-            // Se não passar data, retorna tudo (carga inicial)
-            // Nota: Aqui retornamos até os deletados (active=false) se quisermos sincronizar deleções antigas,
-            // mas para carga inicial geralmente queremos apenas os ativos.
-            // Para simplificar, vamos retornar tudo que mudou desde "sempre" (ou seja, tudo).
-            // Mas cuidado: getAllHerds() filtra active=true.
-            // Para sync completo inicial, talvez queiramos apenas ativos.
             return ResponseEntity.ok(herdService.getAllHerds());
         }
         return ResponseEntity.ok(herdService.getHerdsChangedSince(since));

@@ -1,4 +1,4 @@
-# GadoApp API (Backend)
+# Gadoapp API (Backend)
 
 API RESTful para gestão de rebanhos bovinos, construída com Java e Spring Boot.
 Suporta arquitetura Multi-tenant lógica e sincronização Offline-First.

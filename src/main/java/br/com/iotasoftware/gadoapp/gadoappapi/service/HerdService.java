@@ -44,16 +44,20 @@ public class HerdService {
         }
     }
     
-    private void createOrUpdateByName(HerdDTO dto, User user) {
-
+    // Adicionado 'synchronized' para evitar Race Condition na criação
+    // Nota: Em um ambiente de cluster (vários servidores), isso não funcionaria.
+    // Para cluster, precisaria de Unique Constraint no banco ou Lock Distribuído (Redis).
+    private synchronized void createOrUpdateByName(HerdDTO dto, User user) {
+        // Busca LISTA para evitar erro se houver duplicatas antigas
         List<Herd> duplicates = herdRepository.findByUserAndNameAndActiveTrue(user, dto.getName());
         
         if (!duplicates.isEmpty()) {
+            // Já existe ativo! Atualiza o primeiro encontrado.
             Herd existing = duplicates.get(0);
-            
             if (dto.getActive() != null) existing.setActive(dto.getActive());
             herdRepository.save(existing);
         } else {
+            // Não existe ativo, cria novo
             Herd newHerd = Herd.builder()
                     .name(dto.getName())
                     .active(dto.getActive() != null ? dto.getActive() : true)
@@ -82,6 +86,14 @@ public class HerdService {
     }
 
     public HerdDTO createHerd(HerdDTO dto) {
+        // Verifica duplicidade antes de criar (para API direta)
+        Optional<Herd> duplicate = herdRepository.findByUserAndNameAndActiveTrue(getAuthenticatedUser(), dto.getName())
+                .stream().findFirst();
+        
+        if (duplicate.isPresent()) {
+            throw new IllegalArgumentException("Já existe um rebanho com este nome.");
+        }
+
         Herd herd = Herd.builder()
                 .name(dto.getName())
                 .active(true)

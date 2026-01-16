@@ -5,6 +5,7 @@ import br.com.iotasoftware.gadoapp.gadoappapi.service.BovineService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,19 +22,11 @@ public class BovineController {
     }
 
     @Operation(description = "Retorna todos os bovinos")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Retorna a lista de bovinos"),
-            @ApiResponse(responseCode = "404", description = "Nenhum bovino encontrado")
-    })
     @GetMapping
     public ResponseEntity<List<BovineDTO>> getAllBovines() {
         return ResponseEntity.ok(bovineService.getAllBovines());
     }
 
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Retorna o bovino encontrado"),
-            @ApiResponse(responseCode = "404", description = "Bovino não encontrado")
-    })
     @Operation(description = "Retorna um bovino pelo ID")
     @GetMapping("/{id}")
     public ResponseEntity<BovineDTO> getBovineById(@PathVariable Integer id) {
@@ -44,31 +37,23 @@ public class BovineController {
 
     @Operation(description = "Cria um novo bovino")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Retorna o bovino criado"),
+            @ApiResponse(responseCode = "200", description = "Bovino criado"),
             @ApiResponse(responseCode = "400", description = "Erro de validação")
     })
     @PostMapping
-    public ResponseEntity<BovineDTO> createBovine(@RequestBody BovineDTO dto) {
+    public ResponseEntity<BovineDTO> createBovine(@Valid @RequestBody BovineDTO dto) {
         return ResponseEntity.ok(bovineService.createBovine(dto));
     }
 
     @Operation(description = "Atualiza um bovino existente")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Retorna o bovino atualizado"),
-            @ApiResponse(responseCode = "404", description = "Bovino não encontrado")
-    })
     @PutMapping("/{id}")
-    public ResponseEntity<BovineDTO> updateBovine(@PathVariable Integer id, @RequestBody BovineDTO dto) {
+    public ResponseEntity<BovineDTO> updateBovine(@PathVariable Integer id, @Valid @RequestBody BovineDTO dto) {
         return bovineService.updateBovine(id, dto)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @Operation(description = "Exclui um bovino")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Bovino excluído com sucesso"),
-            @ApiResponse(responseCode = "404", description = "Bovino não encontrado")
-    })
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteBovine(@PathVariable Integer id) {
         if (bovineService.deleteBovine(id)) {

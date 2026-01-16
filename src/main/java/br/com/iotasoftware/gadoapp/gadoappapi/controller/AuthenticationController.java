@@ -4,9 +4,7 @@ import br.com.iotasoftware.gadoapp.gadoappapi.dto.AuthenticationRequest;
 import br.com.iotasoftware.gadoapp.gadoappapi.dto.AuthenticationResponse;
 import br.com.iotasoftware.gadoapp.gadoappapi.dto.RegisterRequest;
 import br.com.iotasoftware.gadoapp.gadoappapi.service.AuthenticationService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,21 +19,16 @@ public class AuthenticationController {
 
     private final AuthenticationService service;
 
-    @Operation(description = "Registra um novo usuário")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Usuário registrado com sucesso"),
-            @ApiResponse(responseCode = "400", description = "Dados inválidos")
-    })
     @PostMapping("/register")
     public ResponseEntity<AuthenticationResponse> register(
-            @RequestBody RegisterRequest request
+            @Valid @RequestBody RegisterRequest request
     ) {
         return ResponseEntity.ok(service.register(request));
     }
 
     @PostMapping("/authenticate")
     public ResponseEntity<AuthenticationResponse> authenticate(
-            @RequestBody AuthenticationRequest request
+            @Valid @RequestBody AuthenticationRequest request
     ) {
         return ResponseEntity.ok(service.authenticate(request));
     }

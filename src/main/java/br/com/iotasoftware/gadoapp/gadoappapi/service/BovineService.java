@@ -30,19 +30,59 @@ public class BovineService {
     @Transactional
     public void syncBovines(List<BovineDTO> dtos) {
         User user = getAuthenticatedUser();
+        java.util.Map<Integer, Integer> tempIdToRealId = new java.util.HashMap<>();
+
         for (BovineDTO dto : dtos) {
+            Bovine savedBovine;
             if (dto.getId() != null) {
                 Optional<Bovine> existingOpt = bovineRepository.findByIdAndHerdUser(dto.getId(), user);
                 if (existingOpt.isPresent()) {
                     Bovine existing = existingOpt.get();
                     updateBovineFromDTO(existing, dto, user);
-                    if (dto.getActive() != null) existing.setActive(dto.getActive());
-                    bovineRepository.save(existing);
+                    if (dto.getActive() != null)
+                        existing.setActive(dto.getActive());
+                    savedBovine = bovineRepository.save(existing);
                 } else {
-                    saveBovineFromDTO(dto, user);
+                    savedBovine = saveBovineFromDTO(dto, user);
                 }
             } else {
-                saveBovineFromDTO(dto, user);
+                savedBovine = saveBovineFromDTO(dto, user);
+            }
+
+            if (dto.getTempId() != null) {
+                tempIdToRealId.put(dto.getTempId(), savedBovine.getId());
+            }
+        }
+
+        for (BovineDTO dto : dtos) {
+            boolean needsUpdate = false;
+            Integer realId = dto.getId() != null ? dto.getId() : tempIdToRealId.get(dto.getTempId());
+
+            if (realId == null)
+                continue;
+
+            Bovine bovine = bovineRepository.findById(realId).orElse(null);
+            if (bovine == null)
+                continue;
+
+            if (dto.getMomId() == null && dto.getMomTempId() != null) {
+                Integer resolvedMomId = tempIdToRealId.get(dto.getMomTempId());
+                if (resolvedMomId != null) {
+                    bovine.setMomId(resolvedMomId);
+                    needsUpdate = true;
+                }
+            }
+
+            if (dto.getDadId() == null && dto.getDadTempId() != null) {
+                Integer resolvedDadId = tempIdToRealId.get(dto.getDadTempId());
+                if (resolvedDadId != null) {
+                    bovine.setDadId(resolvedDadId);
+                    needsUpdate = true;
+                }
+            }
+
+            if (needsUpdate) {
+                bovineRepository.save(bovine);
             }
         }
     }
@@ -52,7 +92,7 @@ public class BovineService {
                 .map(BovineDTO::new)
                 .collect(Collectors.toList());
     }
-    
+
     public List<BovineDTO> getBovinesChangedSince(LocalDateTime since) {
         return bovineRepository.findByHerdUserAndUpdatedAtAfter(getAuthenticatedUser(), since).stream()
                 .map(BovineDTO::new)

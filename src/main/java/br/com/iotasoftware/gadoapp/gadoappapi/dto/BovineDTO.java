@@ -45,6 +45,10 @@ public class BovineDTO {
     private Boolean active;
     private LocalDateTime updatedAt;
 
+    private Integer tempId;
+    private Integer momTempId;
+    private Integer dadTempId;
+
     public BovineDTO(Bovine bovine) {
         this.id = bovine.getId();
         this.name = bovine.getName();

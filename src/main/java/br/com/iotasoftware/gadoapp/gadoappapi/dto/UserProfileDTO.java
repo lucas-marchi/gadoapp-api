@@ -5,15 +5,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class AuthenticationResponse {
-    private String token;
-    private String userName;
-    private String userEmail;
-    private List<FarmDTO> farms;
+public class UserProfileDTO {
+    private String name;
+    private String email;
+    private String phone;
 }

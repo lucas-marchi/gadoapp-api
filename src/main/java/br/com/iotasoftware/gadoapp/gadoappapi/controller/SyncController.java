@@ -47,10 +47,16 @@ public class SyncController {
             @ApiResponse(responseCode = "404", description = "Nenhum rebanho encontrado")
     })
     @PostMapping("/herds/push")
-    public ResponseEntity<?> pushHerds(@RequestBody SyncRequest<HerdDTO> dto) {
+    public ResponseEntity<?> pushHerds(
+            @RequestBody SyncRequest<HerdDTO> dto,
+            @RequestParam(required = false) Integer farmId) {
         List<HerdDTO> herds = dto.getData();
         try {
-            herdService.syncHerds(herds);
+            if (farmId != null) {
+                herdService.syncHerds(herds, farmId);
+            } else {
+                herdService.syncHerds(herds);
+            }
             return ResponseEntity.ok(Map.of("message", "Rebanhos sincronizados com sucesso"));
         } catch (Exception e) {
             e.printStackTrace();
@@ -67,7 +73,15 @@ public class SyncController {
     })
     @GetMapping("/herds/pull")
     public ResponseEntity<List<HerdDTO>> pullHerds(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime since) {
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime since,
+            @RequestParam(required = false) Integer farmId) {
+        if (farmId != null) {
+            if (since == null) {
+                return ResponseEntity.ok(herdService.getAllHerds(farmId));
+            }
+            return ResponseEntity.ok(herdService.getHerdsChangedSince(since, farmId));
+        }
+        // Legacy fallback
         if (since == null) {
             return ResponseEntity.ok(herdService.getAllHerds());
         }

@@ -1,8 +1,10 @@
 package br.com.iotasoftware.gadoapp.gadoappapi.service;
 
 import br.com.iotasoftware.gadoapp.gadoappapi.dto.HerdDTO;
+import br.com.iotasoftware.gadoapp.gadoappapi.model.Farm;
 import br.com.iotasoftware.gadoapp.gadoappapi.model.Herd;
 import br.com.iotasoftware.gadoapp.gadoappapi.model.User;
+import br.com.iotasoftware.gadoapp.gadoappapi.repository.FarmRepository;
 import br.com.iotasoftware.gadoapp.gadoappapi.repository.HerdRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -19,11 +21,38 @@ import java.util.stream.Collectors;
 public class HerdService {
 
     private final HerdRepository herdRepository;
+    private final FarmRepository farmRepository;
 
     private User getAuthenticatedUser() {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 
+    // ===== FARM-SCOPED METHODS =====
+
+    @Transactional
+    public void syncHerds(List<HerdDTO> dtos, Integer farmId) {
+        User user = getAuthenticatedUser();
+        Farm farm = farmRepository.findById(farmId)
+                .orElseThrow(() -> new RuntimeException("Farm not found: " + farmId));
+
+        for (HerdDTO dto : dtos) {
+            if (dto.getId() != null) {
+                Optional<Herd> existingOpt = herdRepository.findByIdAndFarm(dto.getId(), farm);
+                if (existingOpt.isPresent()) {
+                    Herd existing = existingOpt.get();
+                    existing.setName(dto.getName());
+                    if (dto.getActive() != null) existing.setActive(dto.getActive());
+                    herdRepository.save(existing);
+                } else {
+                    createOrUpdateByNameForFarm(dto, user, farm);
+                }
+            } else {
+                createOrUpdateByNameForFarm(dto, user, farm);
+            }
+        }
+    }
+
+    // Legacy user-scoped sync
     @Transactional
     public void syncHerds(List<HerdDTO> dtos) {
         User user = getAuthenticatedUser();
@@ -45,6 +74,24 @@ public class HerdService {
         }
     }
 
+    private synchronized void createOrUpdateByNameForFarm(HerdDTO dto, User user, Farm farm) {
+        List<Herd> duplicates = herdRepository.findByFarmAndNameAndActiveTrue(farm, dto.getName());
+
+        if (!duplicates.isEmpty()) {
+            Herd existing = duplicates.get(0);
+            if (dto.getActive() != null) existing.setActive(dto.getActive());
+            herdRepository.save(existing);
+        } else {
+            Herd newHerd = Herd.builder()
+                    .name(dto.getName())
+                    .active(dto.getActive() != null ? dto.getActive() : true)
+                    .user(user)
+                    .farm(farm)
+                    .build();
+            herdRepository.save(newHerd);
+        }
+    }
+
     private synchronized void createOrUpdateByName(HerdDTO dto, User user) {
         List<Herd> duplicates = herdRepository.findByUserAndNameAndActiveTrue(user, dto.getName());
 
@@ -63,6 +110,24 @@ public class HerdService {
         }
     }
 
+    // Farm-scoped queries
+    public List<HerdDTO> getAllHerds(Integer farmId) {
+        Farm farm = farmRepository.findById(farmId)
+                .orElseThrow(() -> new RuntimeException("Farm not found"));
+        return herdRepository.findByFarmAndActiveTrue(farm).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    public List<HerdDTO> getHerdsChangedSince(LocalDateTime since, Integer farmId) {
+        Farm farm = farmRepository.findById(farmId)
+                .orElseThrow(() -> new RuntimeException("Farm not found"));
+        return herdRepository.findByFarmAndUpdatedAtAfter(farm, since).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    // Legacy user-scoped queries
     public List<HerdDTO> getAllHerds() {
         return herdRepository.findByUserAndActiveTrue(getAuthenticatedUser()).stream()
                 .map(this::convertToDTO)

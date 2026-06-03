@@ -21,6 +21,7 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final FarmService farmService;
 
     public AuthenticationResponse register(RegisterRequest request) {
         var user = User.builder()
@@ -30,9 +31,18 @@ public class AuthenticationService {
                 .role(Role.USER)
                 .build();
         repository.save(user);
+
+        // Create a default farm for new users
+        farmService.createDefaultFarm(user);
+
         var jwtToken = jwtService.generateToken(user);
+        var farms = farmService.listFarmsForUser(user.getId());
+
         return AuthenticationResponse.builder()
                 .token(jwtToken)
+                .userName(user.getName())
+                .userEmail(user.getEmail())
+                .farms(farms)
                 .build();
     }
 
@@ -45,9 +55,15 @@ public class AuthenticationService {
         );
         var user = repository.findByEmail(request.getEmail())
                 .orElseThrow();
+
         var jwtToken = jwtService.generateToken(user);
+        var farms = farmService.listFarmsForUser(user.getId());
+
         return AuthenticationResponse.builder()
                 .token(jwtToken)
+                .userName(user.getName())
+                .userEmail(user.getEmail())
+                .farms(farms)
                 .build();
     }
 }

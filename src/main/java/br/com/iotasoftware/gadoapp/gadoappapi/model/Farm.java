@@ -1,6 +1,5 @@
 package br.com.iotasoftware.gadoapp.gadoappapi.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -14,8 +13,8 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "herds")
-public class Herd {
+@Table(name = "farms")
+public class Farm {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,6 +22,19 @@ public class Herd {
 
     @Column(nullable = false)
     private String name;
+
+    @Column(name = "inscricao_estadual")
+    private String inscricaoEstadual;
+
+    private String city;
+
+    @Column(length = 2)
+    private String state;
+
+    private String address;
+
+    @Column(name = "total_area_ha")
+    private Double totalAreaHa;
 
     @Builder.Default
     @Column(nullable = false)
@@ -34,27 +46,19 @@ public class Herd {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    @JsonIgnore
-    private User user;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "farm_id")
-    @JsonIgnore
-    private Farm farm;
-
-    @OneToMany(mappedBy = "herd", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "farm", cascade = CascadeType.ALL)
     @Builder.Default
-    private List<Bovine> bovines = new ArrayList<>();
+    private List<FarmMember> members = new ArrayList<>();
+
+    @OneToMany(mappedBy = "farm", cascade = CascadeType.ALL)
+    @Builder.Default
+    private List<Herd> herds = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
-        if (this.active == null) {
-            this.active = true;
-        }
+        if (this.active == null) this.active = true;
     }
 
     @PreUpdate

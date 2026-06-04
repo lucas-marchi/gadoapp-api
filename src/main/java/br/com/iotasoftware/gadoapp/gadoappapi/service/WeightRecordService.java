@@ -54,8 +54,20 @@ public class WeightRecordService {
                 .collect(Collectors.toList());
     }
 
+    public List<WeightRecordDTO> getAllRecords(Integer farmId) {
+        return weightRecordRepository.findByBovineHerdFarmIdAndActiveTrue(farmId).stream()
+                .map(WeightRecordDTO::new)
+                .collect(Collectors.toList());
+    }
+
     public List<WeightRecordDTO> getRecordsChangedSince(LocalDateTime since) {
         return weightRecordRepository.findByBovineHerdUserAndUpdatedAtAfter(getAuthenticatedUser(), since).stream()
+                .map(WeightRecordDTO::new)
+                .collect(Collectors.toList());
+    }
+
+    public List<WeightRecordDTO> getRecordsChangedSince(LocalDateTime since, Integer farmId) {
+        return weightRecordRepository.findByBovineHerdFarmIdAndUpdatedAtAfter(farmId, since).stream()
                 .map(WeightRecordDTO::new)
                 .collect(Collectors.toList());
     }

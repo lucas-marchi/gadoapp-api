@@ -17,4 +17,9 @@ public interface HealthRecordRepository extends JpaRepository<HealthRecord, Inte
     Optional<HealthRecord> findByIdAndBovineHerdUser(Integer id, User user);
 
     List<HealthRecord> findByBovineIdAndActiveTrue(Integer bovineId);
+
+    // Farm-scoped queries
+    List<HealthRecord> findByBovineHerdFarmIdAndActiveTrue(Integer farmId);
+
+    List<HealthRecord> findByBovineHerdFarmIdAndUpdatedAtAfter(Integer farmId, LocalDateTime date);
 }

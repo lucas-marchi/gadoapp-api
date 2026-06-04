@@ -21,4 +21,9 @@ public interface BovineRepository extends JpaRepository<Bovine, Integer> {
     Optional<Bovine> findByIdAndHerdUser(Integer id, User user);
     
     List<Bovine> findByHerdId(Integer herdId);
+
+    // Farm-scoped queries
+    List<Bovine> findByHerdFarmIdAndActiveTrue(Integer farmId);
+
+    List<Bovine> findByHerdFarmIdAndUpdatedAtAfter(Integer farmId, LocalDateTime date);
 }

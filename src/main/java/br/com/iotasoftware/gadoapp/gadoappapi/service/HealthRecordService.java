@@ -54,8 +54,20 @@ public class HealthRecordService {
                 .collect(Collectors.toList());
     }
 
+    public List<HealthRecordDTO> getAllRecords(Integer farmId) {
+        return healthRecordRepository.findByBovineHerdFarmIdAndActiveTrue(farmId).stream()
+                .map(HealthRecordDTO::new)
+                .collect(Collectors.toList());
+    }
+
     public List<HealthRecordDTO> getRecordsChangedSince(LocalDateTime since) {
         return healthRecordRepository.findByBovineHerdUserAndUpdatedAtAfter(getAuthenticatedUser(), since).stream()
+                .map(HealthRecordDTO::new)
+                .collect(Collectors.toList());
+    }
+
+    public List<HealthRecordDTO> getRecordsChangedSince(LocalDateTime since, Integer farmId) {
+        return healthRecordRepository.findByBovineHerdFarmIdAndUpdatedAtAfter(farmId, since).stream()
                 .map(HealthRecordDTO::new)
                 .collect(Collectors.toList());
     }

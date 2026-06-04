@@ -54,8 +54,20 @@ public class BirthRecordService {
                 .collect(Collectors.toList());
     }
 
+    public List<BirthRecordDTO> getAllRecords(Integer farmId) {
+        return birthRecordRepository.findByMotherHerdFarmIdAndActiveTrue(farmId).stream()
+                .map(BirthRecordDTO::new)
+                .collect(Collectors.toList());
+    }
+
     public List<BirthRecordDTO> getRecordsChangedSince(LocalDateTime since) {
         return birthRecordRepository.findByMotherHerdUserAndUpdatedAtAfter(getAuthenticatedUser(), since).stream()
+                .map(BirthRecordDTO::new)
+                .collect(Collectors.toList());
+    }
+
+    public List<BirthRecordDTO> getRecordsChangedSince(LocalDateTime since, Integer farmId) {
+        return birthRecordRepository.findByMotherHerdFarmIdAndUpdatedAtAfter(farmId, since).stream()
                 .map(BirthRecordDTO::new)
                 .collect(Collectors.toList());
     }

@@ -118,7 +118,15 @@ public class SyncController {
     })
     @GetMapping("/bovines/pull")
     public ResponseEntity<List<BovineDTO>> pullBovines(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime since) {
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime since,
+            @RequestParam(required = false) Integer farmId) {
+        if (farmId != null) {
+            if (since == null) {
+                return ResponseEntity.ok(bovineService.getAllBovines(farmId));
+            }
+            return ResponseEntity.ok(bovineService.getBovinesChangedSince(since, farmId));
+        }
+        // Legacy fallback
         if (since == null) {
             return ResponseEntity.ok(bovineService.getAllBovines());
         }
@@ -152,7 +160,14 @@ public class SyncController {
     })
     @GetMapping("/weight-records/pull")
     public ResponseEntity<List<WeightRecordDTO>> pullWeightRecords(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime since) {
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime since,
+            @RequestParam(required = false) Integer farmId) {
+        if (farmId != null) {
+            if (since == null) {
+                return ResponseEntity.ok(weightRecordService.getAllRecords(farmId));
+            }
+            return ResponseEntity.ok(weightRecordService.getRecordsChangedSince(since, farmId));
+        }
         if (since == null) {
             return ResponseEntity.ok(weightRecordService.getAllRecords());
         }
@@ -186,7 +201,14 @@ public class SyncController {
     })
     @GetMapping("/birth-records/pull")
     public ResponseEntity<List<BirthRecordDTO>> pullBirthRecords(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime since) {
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime since,
+            @RequestParam(required = false) Integer farmId) {
+        if (farmId != null) {
+            if (since == null) {
+                return ResponseEntity.ok(birthRecordService.getAllRecords(farmId));
+            }
+            return ResponseEntity.ok(birthRecordService.getRecordsChangedSince(since, farmId));
+        }
         if (since == null) {
             return ResponseEntity.ok(birthRecordService.getAllRecords());
         }
@@ -220,7 +242,14 @@ public class SyncController {
     })
     @GetMapping("/health-records/pull")
     public ResponseEntity<List<HealthRecordDTO>> pullHealthRecords(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime since) {
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime since,
+            @RequestParam(required = false) Integer farmId) {
+        if (farmId != null) {
+            if (since == null) {
+                return ResponseEntity.ok(healthRecordService.getAllRecords(farmId));
+            }
+            return ResponseEntity.ok(healthRecordService.getRecordsChangedSince(since, farmId));
+        }
         if (since == null) {
             return ResponseEntity.ok(healthRecordService.getAllRecords());
         }

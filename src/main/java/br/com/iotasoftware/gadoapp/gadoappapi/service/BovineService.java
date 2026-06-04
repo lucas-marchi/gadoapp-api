@@ -93,8 +93,20 @@ public class BovineService {
                 .collect(Collectors.toList());
     }
 
+    public List<BovineDTO> getAllBovines(Integer farmId) {
+        return bovineRepository.findByHerdFarmIdAndActiveTrue(farmId).stream()
+                .map(BovineDTO::new)
+                .collect(Collectors.toList());
+    }
+
     public List<BovineDTO> getBovinesChangedSince(LocalDateTime since) {
         return bovineRepository.findByHerdUserAndUpdatedAtAfter(getAuthenticatedUser(), since).stream()
+                .map(BovineDTO::new)
+                .collect(Collectors.toList());
+    }
+
+    public List<BovineDTO> getBovinesChangedSince(LocalDateTime since, Integer farmId) {
+        return bovineRepository.findByHerdFarmIdAndUpdatedAtAfter(farmId, since).stream()
                 .map(BovineDTO::new)
                 .collect(Collectors.toList());
     }

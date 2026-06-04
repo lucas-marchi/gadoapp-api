@@ -17,4 +17,9 @@ public interface BirthRecordRepository extends JpaRepository<BirthRecord, Intege
     Optional<BirthRecord> findByIdAndMotherHerdUser(Integer id, User user);
 
     List<BirthRecord> findByMotherIdAndActiveTrue(Integer motherId);
+
+    // Farm-scoped queries
+    List<BirthRecord> findByMotherHerdFarmIdAndActiveTrue(Integer farmId);
+
+    List<BirthRecord> findByMotherHerdFarmIdAndUpdatedAtAfter(Integer farmId, LocalDateTime date);
 }

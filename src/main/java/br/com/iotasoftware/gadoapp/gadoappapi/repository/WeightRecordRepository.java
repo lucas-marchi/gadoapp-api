@@ -17,4 +17,9 @@ public interface WeightRecordRepository extends JpaRepository<WeightRecord, Inte
     Optional<WeightRecord> findByIdAndBovineHerdUser(Integer id, User user);
 
     List<WeightRecord> findByBovineIdAndActiveTrue(Integer bovineId);
+
+    // Farm-scoped queries
+    List<WeightRecord> findByBovineHerdFarmIdAndActiveTrue(Integer farmId);
+
+    List<WeightRecord> findByBovineHerdFarmIdAndUpdatedAtAfter(Integer farmId, LocalDateTime date);
 }

@@ -26,6 +26,8 @@ public class UserProfileController {
                 .name(user.getName())
                 .email(user.getEmail())
                 .phone(user.getPhone())
+                .subscriptionStatus(user.getSubscriptionStatus())
+                .stripePriceId(user.getStripePriceId())
                 .build());
     }
 
@@ -42,6 +44,8 @@ public class UserProfileController {
                 .name(user.getName())
                 .email(user.getEmail())
                 .phone(user.getPhone())
+                .subscriptionStatus(user.getSubscriptionStatus())
+                .stripePriceId(user.getStripePriceId())
                 .build());
     }
 

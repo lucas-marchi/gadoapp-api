@@ -39,6 +39,15 @@ public class User implements UserDetails {
     @Column(name = "stripe_customer_id")
     private String stripeCustomerId;
 
+    @Column(name = "stripe_subscription_id")
+    private String stripeSubscriptionId;
+
+    @Column(name = "subscription_status")
+    private String subscriptionStatus;
+
+    @Column(name = "stripe_price_id")
+    private String stripePriceId;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority(role.name()));

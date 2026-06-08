@@ -19,9 +19,18 @@ public class FarmService {
     private final FarmRepository farmRepository;
     private final FarmMemberRepository memberRepository;
     private final UserRepository userRepository;
+    private final SubscriptionLimitService limitService;
 
     @Transactional
     public FarmDTO createFarm(User owner, FarmDTO dto) {
+        var limits = limitService.getLimitsForUser(owner);
+        long currentFarms = memberRepository.findByUserIdAndStatus(owner.getId(), "ACTIVE")
+                .stream().filter(m -> m.getRole() == FarmRole.OWNER).count();
+
+        if (currentFarms >= limits.getMaxFarms()) {
+            throw new br.com.iotasoftware.gadoapp.gadoappapi.exception.LimitExceededException("Limite de propriedades atingido para o seu plano atual.");
+        }
+
         var farm = Farm.builder()
                 .name(dto.getName())
                 .inscricaoEstadual(dto.getInscricaoEstadual())
@@ -99,6 +108,13 @@ public class FarmService {
         var existing = memberRepository.findByUserIdAndFarmId(invitedUser.getId(), farmId);
         if (existing.isPresent()) {
             throw new RuntimeException("User is already a member of this farm");
+        }
+
+        var limits = limitService.getLimitsForUser(inviter);
+        long currentInvites = memberRepository.findByFarmIdAndStatus(farmId, "ACTIVE").stream().filter(m -> m.getRole() != FarmRole.OWNER).count()
+                + memberRepository.findByFarmIdAndStatus(farmId, "PENDING").size();
+        if (currentInvites >= limits.getMaxInvitesPerFarm()) {
+            throw new br.com.iotasoftware.gadoapp.gadoappapi.exception.LimitExceededException("Limite de membros/convites atingido para esta propriedade no plano atual.");
         }
 
         var member = FarmMember.builder()

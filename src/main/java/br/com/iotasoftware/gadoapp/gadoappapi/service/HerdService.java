@@ -22,6 +22,7 @@ public class HerdService {
 
     private final HerdRepository herdRepository;
     private final FarmRepository farmRepository;
+    private final br.com.iotasoftware.gadoapp.gadoappapi.service.SubscriptionLimitService limitService;
 
     private User getAuthenticatedUser() {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -82,6 +83,11 @@ public class HerdService {
             if (dto.getActive() != null) existing.setActive(dto.getActive());
             herdRepository.save(existing);
         } else {
+            var limits = limitService.getLimitsForUser(user);
+            long currentHerds = herdRepository.findByFarmAndActiveTrue(farm).size();
+            if (currentHerds >= limits.getMaxHerdsPerFarm()) {
+                throw new br.com.iotasoftware.gadoapp.gadoappapi.exception.LimitExceededException("Limite de rebanhos atingido para esta propriedade no plano atual.");
+            }
             Herd newHerd = Herd.builder()
                     .name(dto.getName())
                     .active(dto.getActive() != null ? dto.getActive() : true)
@@ -101,6 +107,14 @@ public class HerdService {
                 existing.setActive(dto.getActive());
             herdRepository.save(existing);
         } else {
+            // Note: in legacy mode, we don't have farm context easily here, but we can restrict total herds globally or assume single farm.
+            // For now, limiting globally against maxHerdsPerFarm since free has 1 farm anyway.
+            var limits = limitService.getLimitsForUser(user);
+            long currentHerds = herdRepository.findByUserAndActiveTrue(user).size();
+            if (currentHerds >= limits.getMaxHerdsPerFarm()) {
+                throw new br.com.iotasoftware.gadoapp.gadoappapi.exception.LimitExceededException("Limite de rebanhos atingido no plano atual.");
+            }
+
             Herd newHerd = Herd.builder()
                     .name(dto.getName())
                     .active(dto.getActive() != null ? dto.getActive() : true)
@@ -147,17 +161,24 @@ public class HerdService {
     }
 
     public HerdDTO createHerd(HerdDTO dto) {
-        Optional<Herd> duplicate = herdRepository.findByUserAndNameAndActiveTrue(getAuthenticatedUser(), dto.getName())
+        User user = getAuthenticatedUser();
+        Optional<Herd> duplicate = herdRepository.findByUserAndNameAndActiveTrue(user, dto.getName())
                 .stream().findFirst();
 
         if (duplicate.isPresent()) {
             throw new IllegalArgumentException("Já existe um rebanho com este nome.");
         }
 
+        var limits = limitService.getLimitsForUser(user);
+        long currentHerds = herdRepository.findByUserAndActiveTrue(user).size();
+        if (currentHerds >= limits.getMaxHerdsPerFarm()) {
+            throw new br.com.iotasoftware.gadoapp.gadoappapi.exception.LimitExceededException("Limite de rebanhos atingido no plano atual.");
+        }
+
         Herd herd = Herd.builder()
                 .name(dto.getName())
                 .active(true)
-                .user(getAuthenticatedUser())
+                .user(user)
                 .build();
         Herd savedHerd = herdRepository.save(herd);
         return convertToDTO(savedHerd);

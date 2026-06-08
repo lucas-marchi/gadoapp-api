@@ -22,6 +22,7 @@ public class BovineService {
 
     private final BovineRepository bovineRepository;
     private final HerdRepository herdRepository;
+    private final br.com.iotasoftware.gadoapp.gadoappapi.service.SubscriptionLimitService limitService;
 
     private User getAuthenticatedUser() {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -145,9 +146,17 @@ public class BovineService {
     private Bovine saveBovineFromDTO(BovineDTO dto, User user) {
         Herd herd = null;
         if (dto.getHerdId() != null) {
-
             herd = herdRepository.findByIdAndUser(dto.getHerdId(), user)
                     .orElseThrow(() -> new RuntimeException("Rebanho não encontrado ou não pertence ao usuário"));
+            
+            // Limit Validation
+            if (dto.getId() == null) {
+                var limits = limitService.getLimitsForUser(user);
+                long currentBovinesInFarm = bovineRepository.findByHerdFarmIdAndActiveTrue(herd.getFarm().getId()).size();
+                if (currentBovinesInFarm >= limits.getMaxBovinesPerFarm()) {
+                    throw new br.com.iotasoftware.gadoapp.gadoappapi.exception.LimitExceededException("Limite de bovinos atingido para a propriedade no plano atual.");
+                }
+            }
         }
 
         Bovine newBovine = Bovine.builder()

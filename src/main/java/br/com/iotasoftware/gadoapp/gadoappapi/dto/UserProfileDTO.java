@@ -15,4 +15,6 @@ public class UserProfileDTO {
     private String phone;
     private String subscriptionStatus;
     private String stripePriceId;
+    private SubscriptionLimits limits;
+    private SubscriptionUsage usage;
 }

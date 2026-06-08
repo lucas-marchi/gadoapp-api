@@ -19,16 +19,12 @@ public class UserProfileController {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final br.com.iotasoftware.gadoapp.gadoappapi.service.SubscriptionLimitService limitService;
+    private final br.com.iotasoftware.gadoapp.gadoappapi.repository.FarmMemberRepository farmMemberRepository;
 
     @GetMapping
     public ResponseEntity<UserProfileDTO> getProfile(@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(UserProfileDTO.builder()
-                .name(user.getName())
-                .email(user.getEmail())
-                .phone(user.getPhone())
-                .subscriptionStatus(user.getSubscriptionStatus())
-                .stripePriceId(user.getStripePriceId())
-                .build());
+        return ResponseEntity.ok(buildDto(user));
     }
 
     @PutMapping
@@ -40,13 +36,25 @@ public class UserProfileController {
         user.setPhone(dto.getPhone());
         userRepository.save(user);
 
-        return ResponseEntity.ok(UserProfileDTO.builder()
+        return ResponseEntity.ok(buildDto(user));
+    }
+
+    private UserProfileDTO buildDto(User user) {
+        var limits = limitService.getLimitsForUser(user);
+        int totalFarms = (int) farmMemberRepository.findByUserIdAndStatus(user.getId(), "ACTIVE")
+                .stream()
+                .filter(m -> m.getRole() == br.com.iotasoftware.gadoapp.gadoappapi.model.FarmRole.OWNER)
+                .count();
+
+        return UserProfileDTO.builder()
                 .name(user.getName())
                 .email(user.getEmail())
                 .phone(user.getPhone())
                 .subscriptionStatus(user.getSubscriptionStatus())
                 .stripePriceId(user.getStripePriceId())
-                .build());
+                .limits(limits)
+                .usage(new br.com.iotasoftware.gadoapp.gadoappapi.dto.SubscriptionUsage(totalFarms))
+                .build();
     }
 
     @PutMapping("/password")

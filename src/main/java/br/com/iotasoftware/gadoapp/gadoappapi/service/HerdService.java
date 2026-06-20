@@ -4,6 +4,7 @@ import br.com.iotasoftware.gadoapp.gadoappapi.dto.HerdDTO;
 import br.com.iotasoftware.gadoapp.gadoappapi.model.Farm;
 import br.com.iotasoftware.gadoapp.gadoappapi.model.Herd;
 import br.com.iotasoftware.gadoapp.gadoappapi.model.User;
+import br.com.iotasoftware.gadoapp.gadoappapi.repository.FarmMemberRepository;
 import br.com.iotasoftware.gadoapp.gadoappapi.repository.FarmRepository;
 import br.com.iotasoftware.gadoapp.gadoappapi.repository.HerdRepository;
 import jakarta.transaction.Transactional;
@@ -22,6 +23,7 @@ public class HerdService {
 
     private final HerdRepository herdRepository;
     private final FarmRepository farmRepository;
+    private final FarmMemberRepository farmMemberRepository;
     private final br.com.iotasoftware.gadoapp.gadoappapi.service.SubscriptionLimitService limitService;
 
     private User getAuthenticatedUser() {
@@ -33,6 +35,7 @@ public class HerdService {
     @Transactional
     public void syncHerds(List<HerdDTO> dtos, Integer farmId) {
         User user = getAuthenticatedUser();
+        assertFarmMembership(user, farmId);
         Farm farm = farmRepository.findById(farmId)
                 .orElseThrow(() -> new RuntimeException("Farm not found: " + farmId));
 
@@ -126,6 +129,7 @@ public class HerdService {
 
     // Farm-scoped queries
     public List<HerdDTO> getAllHerds(Integer farmId) {
+        assertFarmMembership(getAuthenticatedUser(), farmId);
         Farm farm = farmRepository.findById(farmId)
                 .orElseThrow(() -> new RuntimeException("Farm not found"));
         return herdRepository.findByFarmAndActiveTrue(farm).stream()
@@ -134,11 +138,20 @@ public class HerdService {
     }
 
     public List<HerdDTO> getHerdsChangedSince(LocalDateTime since, Integer farmId) {
+        assertFarmMembership(getAuthenticatedUser(), farmId);
         Farm farm = farmRepository.findById(farmId)
                 .orElseThrow(() -> new RuntimeException("Farm not found"));
         return herdRepository.findByFarmAndUpdatedAtAfter(farm, since).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
+    }
+
+    private void assertFarmMembership(User user, Integer farmId) {
+        var membership = farmMemberRepository.findByUserIdAndFarmId(user.getId(), farmId)
+                .orElseThrow(() -> new SecurityException("Access denied: not a member of this farm"));
+        if (!"ACTIVE".equals(membership.getStatus())) {
+            throw new SecurityException("Access denied: membership not active");
+        }
     }
 
     // Legacy user-scoped queries

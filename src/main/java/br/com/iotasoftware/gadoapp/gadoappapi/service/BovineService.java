@@ -5,6 +5,7 @@ import br.com.iotasoftware.gadoapp.gadoappapi.model.Bovine;
 import br.com.iotasoftware.gadoapp.gadoappapi.model.Herd;
 import br.com.iotasoftware.gadoapp.gadoappapi.model.User;
 import br.com.iotasoftware.gadoapp.gadoappapi.repository.BovineRepository;
+import br.com.iotasoftware.gadoapp.gadoappapi.repository.FarmMemberRepository;
 import br.com.iotasoftware.gadoapp.gadoappapi.repository.HerdRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ public class BovineService {
 
     private final BovineRepository bovineRepository;
     private final HerdRepository herdRepository;
+    private final FarmMemberRepository farmMemberRepository;
     private final br.com.iotasoftware.gadoapp.gadoappapi.service.SubscriptionLimitService limitService;
 
     private User getAuthenticatedUser() {
@@ -95,6 +97,7 @@ public class BovineService {
     }
 
     public List<BovineDTO> getAllBovines(Integer farmId) {
+        assertFarmMembership(getAuthenticatedUser(), farmId);
         return bovineRepository.findByHerdFarmIdAndActiveTrue(farmId).stream()
                 .map(BovineDTO::new)
                 .collect(Collectors.toList());
@@ -107,9 +110,18 @@ public class BovineService {
     }
 
     public List<BovineDTO> getBovinesChangedSince(LocalDateTime since, Integer farmId) {
+        assertFarmMembership(getAuthenticatedUser(), farmId);
         return bovineRepository.findByHerdFarmIdAndUpdatedAtAfter(farmId, since).stream()
                 .map(BovineDTO::new)
                 .collect(Collectors.toList());
+    }
+
+    private void assertFarmMembership(User user, Integer farmId) {
+        var membership = farmMemberRepository.findByUserIdAndFarmId(user.getId(), farmId)
+                .orElseThrow(() -> new SecurityException("Access denied: not a member of this farm"));
+        if (!"ACTIVE".equals(membership.getStatus())) {
+            throw new SecurityException("Access denied: membership not active");
+        }
     }
 
     public Optional<BovineDTO> getBovineById(Integer id) {

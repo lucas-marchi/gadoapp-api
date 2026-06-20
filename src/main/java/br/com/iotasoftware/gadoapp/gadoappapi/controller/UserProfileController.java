@@ -60,7 +60,7 @@ public class UserProfileController {
     @PutMapping("/password")
     public ResponseEntity<Map<String, String>> changePassword(
             @AuthenticationPrincipal User user,
-            @RequestBody ChangePasswordRequest request
+            @jakarta.validation.Valid @RequestBody ChangePasswordRequest request
     ) {
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
             return ResponseEntity.badRequest().body(Map.of("error", "Senha atual incorreta"));
